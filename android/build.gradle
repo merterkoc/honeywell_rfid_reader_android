@@ -54,6 +54,6 @@ android {
 }
 
 dependencies {
-    //implementation(name:'honeywell', ext:'aar')
     api project(":honeywell_rfid_reader_plugin")
+    api project(":honeywell_rfid_reader_data_collection")
 }
