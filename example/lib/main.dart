@@ -32,7 +32,8 @@ class _MyAppState extends State<MyApp> {
     // We also handle the message potentially returning null.
     try {
       platformVersion =
-          await _honeywellRfidReaderAndroidPlugin.getPlatformVersion() ?? 'Unknown platform version';
+          await _honeywellRfidReaderAndroidPlugin.getPlatformVersion() ??
+              'Unknown platform version';
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }
@@ -55,7 +56,32 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          child: Column(
+            children: [
+              if (_platformVersion == 'Unknown')
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator.adaptive(),
+                )
+              else
+                Text('Running on: $_platformVersion\n'),
+              ElevatedButton(
+                onPressed: () async {
+                  setState(() {
+                    _platformVersion = 'Unknown';
+                  });
+                  await Future.delayed(const Duration(seconds: 1));
+                  final newVersion = await _honeywellRfidReaderAndroidPlugin
+                          .getPlatformVersion() ??
+                      'Unknown platform version';
+                  setState(() {
+                    _platformVersion = newVersion;
+                  });
+                },
+                child: const Text('Start Reader'),
+              ),
+            ],
+          ),
         ),
       ),
     );

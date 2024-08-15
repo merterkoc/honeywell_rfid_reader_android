@@ -22,4 +22,8 @@ plugins {
     id "org.jetbrains.kotlin.android" version "1.7.10" apply false
 }
 
-include ":app"
+
+include ':app'
+include ':honeywell_rfid_reader_plugin'
+//include ":app"
+//include ':app', ':honeywell_rfid_reader_plugin'
