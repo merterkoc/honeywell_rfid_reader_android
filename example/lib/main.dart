@@ -1,8 +1,12 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_android.dart';
+import 'package:honeywell_rfid_reader_android/model/bluetooh_device_info.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,34 +21,31 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
-  final _honeywellRfidReaderAndroidPlugin = HoneywellRfidReaderAndroid();
+  PermissionStatus? _bluetoothPermissionStatus;
+  final _honewayPlugin = HoneywellRfidReaderAndroid();
+  PermissionStatus? _permissionStatus;
+  List<HashMap<String, dynamic>>? _devices;
 
   @override
   void initState() {
     super.initState();
     initPlatformState();
+    initPermission();
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await _honeywellRfidReaderAndroidPlugin.getPlatformVersion() ??
-              'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
+    _honewayPlugin.connectionStatusChanged();
+  }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
+  void initPermission() {
+    Permission.location.request().then((value) {
+      setState(() {
+        _permissionStatus = value;
+      });
+    }).catchError((error) {
+      print('Permission denied');
+      _permissionStatus = PermissionStatus.denied;
     });
   }
 
@@ -55,33 +56,78 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Column(
-            children: [
-              if (_platformVersion == 'Unknown')
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator.adaptive(),
-                )
-              else
-                Text('Running on: $_platformVersion\n'),
-              ElevatedButton(
-                onPressed: () async {
-                  setState(() {
-                    _platformVersion = 'Unknown';
-                  });
-                  await Future.delayed(const Duration(seconds: 1));
-                  final newVersion = await _honeywellRfidReaderAndroidPlugin
-                          .getPlatformVersion() ??
-                      'Unknown platform version';
-                  setState(() {
-                    _platformVersion = newVersion;
-                  });
-                },
-                child: const Text('Start Reader'),
-              ),
-            ],
-          ),
+        body: Column(
+          children: [
+            Text(
+                'Location Permission Status: ${_permissionStatus?.toString()}'),
+            ElevatedButton(
+              onPressed: () async {
+                final hashMap =
+                    await _honewayPlugin.getAvailableBluetoothDevices();
+                setState(() {
+                  _devices = hashMap;
+                });
+              },
+              child: const Text('Get Available Bluetooth Devices'),
+            ),
+            Text('Available Bluetooth Devices: ${_devices?.length}'),
+            Center(
+              child: Text('Running on: $_platformVersion\n'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                _honewayPlugin.createReader();
+              },
+              child: const Text('Create Reader'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                _honewayPlugin.connectReader();
+              },
+              child: const Text('Connect Reader'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                _honewayPlugin.disconnect();
+              },
+              child: const Text('Disconnect Reader'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                _honewayPlugin.startListening();
+              },
+              child: const Text('Start Listening'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                _honewayPlugin.searchBluetoothDevices();
+              },
+              child: const Text('Search Bluetooth Devices'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final device = _honewayPlugin.onDevicesUpdated();
+              },
+              child: const Text('Update Devices'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final status = await Permission.bluetooth.request();
+                print('Is Bluetooth Permission Granted: $status');
+                setState(() {
+                  _bluetoothPermissionStatus = status;
+                });
+              },
+              child: Text(
+                  'Location Permission Status: ${_bluetoothPermissionStatus?.toString()}'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                _honewayPlugin.readRfid();
+              },
+              child: const Text('Read RFID'),
+            ),
+          ],
         ),
       ),
     );
