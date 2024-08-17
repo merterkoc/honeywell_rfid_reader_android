@@ -1,49 +1,33 @@
-import 'dart:collection';
+import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
 
-import 'package:honeywell_rfid_reader_android/model/bluetooh_device_info.dart';
+class HoneywellRfidReaderAndroid implements HoneywellRfidReaderPlatform {
+  static HoneywellRfidReaderPlatform get instance =>
+      HoneywellRfidReaderPlatform.instance;
 
-import 'honeywell_rfid_reader_android_platform_interface.dart';
-
-class HoneywellRfidReaderAndroid {
-  void connectionStatusChanged() {
-    HoneywellRfidReaderAndroidPlatform.instance.connectionStatusChanged();
+  @override
+  Future<void> initialize() {
+    return instance.initialize();
   }
 
-  void createReader() {
-    HoneywellRfidReaderAndroidPlatform.instance.createReader();
+  @override
+  Future<void> scanBluetoothDevices({bool bluetoothAutoConnect = false}) {
+    return instance.scanBluetoothDevices(
+      bluetoothAutoConnect: bluetoothAutoConnect,
+    );
   }
 
-  void connectReader() {
-    HoneywellRfidReaderAndroidPlatform.instance.connectReader();
+  @override
+  Future<void> disableScanBluetoothDevices() {
+    return instance.disableScanBluetoothDevices();
   }
 
-  void disconnect() {
-    HoneywellRfidReaderAndroidPlatform.instance.disconnect();
+  @override
+  Future<void> disconnectDevice() async {
+    await instance.disconnectDevice();
   }
 
-  void startListening() {
-    HoneywellRfidReaderAndroidPlatform.instance.startListening();
-  }
-
-  Future<void> searchBluetoothDevices() async {
-    await HoneywellRfidReaderAndroidPlatform.instance.searchBluetoothDevices();
-  }
-
-  Future<void> onDevicesUpdated() async {
-    await HoneywellRfidReaderAndroidPlatform.instance.onDevicesUpdated();
-  }
-
-  Future<bool> isBluetoothPermissionGranted() {
-    return HoneywellRfidReaderAndroidPlatform.instance
-        .isBluetoothPermissionGranted();
-  }
-
-  Future<List<HashMap<String, dynamic>>> getAvailableBluetoothDevices() {
-    return HoneywellRfidReaderAndroidPlatform.instance
-        .getAvailableBluetoothDevices();
-  }
-
-  Future<void> readRfid() {
-    return HoneywellRfidReaderAndroidPlatform.instance.readRfid();
+  @override
+  Future<void> createReader() async {
+    await instance.createReader();
   }
 }

@@ -6,7 +6,7 @@ import android.os.Handler;
 import androidx.annotation.NonNull;
 
 import com.example.honeywell_rfid_reader_android.messages.model.ConnectionStatus;
-import com.example.honeywell_rfid_reader_android.messages.model.EventType;
+import com.example.honeywell_rfid_reader_android.messages.model.MessageType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +16,7 @@ import io.flutter.plugin.common.MethodChannel;
 public class DartMessenger {
     @NonNull
     private final MethodChannel readerChannel;
+
     @NonNull
     private final Handler handler;
     @NonNull
@@ -31,10 +32,10 @@ public class DartMessenger {
     }
 
     public void sendRfidConnectionStatusEvent(ConnectionStatus connectionStatus) {
-        this.send(EventType.RFID_CONNECTION_STATUS_CHANGED,
+        this.send(MessageType.RFID_CONNECTION_STATUS_CHANGED,
                 new HashMap<String, Object>() {
                     {
-                        put("status", connectionStatus.getValue());
+                        put("status", connectionStatus.getStatusCode());
                     }
                 });
     }
@@ -43,7 +44,7 @@ public class DartMessenger {
      * Sends a message to the Flutter client informing that the new tag read.
      */
     public void sendRfidReadEvent(String data) {
-        send(EventType.RFID_READ,
+        send(MessageType.RFID_READ,
                 new HashMap<String, Object>() {
                     {
                         put("data", data);
@@ -52,29 +53,22 @@ public class DartMessenger {
         );
     }
 
-
-    /**
-     * Sends a message to the Flutter client informing that an error occurred while interacting with
-     * the reader.
-     *
-     * @param code contains details regarding the error that occurred.
-     */
-    public void sendReaderErrorEvent(int code) {
+    public void sendReaderErrorEvent(String errorMessage) {
         this.send(
-                EventType.RFID_ERROR,
+                MessageType.ERROR,
                 new HashMap<String, Object>() {
                     {
-                        put("message", context.getString(code));
+                        put("message", errorMessage);
                     }
                 }
         );
     }
 
-    private void send(EventType eventType) {
+    private void send(MessageType eventType) {
         send(eventType, new HashMap<>());
     }
 
-    private void send(EventType eventType, Map<String, Object> args) {
+    private void send(MessageType eventType, Map<String, Object> args) {
         handler.post(() -> readerChannel.invokeMethod(eventType.name(), args));
     }
 }

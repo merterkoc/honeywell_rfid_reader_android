@@ -9,7 +9,7 @@ public enum ConnectionStatus {
         this.value = value;
     }
 
-    public int getValue() {
+    public int getStatusCode() {
         return value;
     }
 }

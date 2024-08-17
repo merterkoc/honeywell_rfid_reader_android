@@ -42,8 +42,10 @@ import java.util.Map;
  * HoneywellRfidReaderAndroidPlugin
  */
 public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCallHandler {
-    private MethodChannel channel;
 
+    private boolean isInitialized = false;
+    private boolean bluetoothAutoConnect = false;
+    private MethodChannel channel;
     private DartMessenger dartMessenger;
     private EventChannel onTagReadEventChannel;
 
@@ -77,9 +79,10 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.METHOD_CHANNEL);
-        onTagReadEventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.ON_TAG_READ);
+        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.MAIN_CHANNEL);
         dartMessenger = new DartMessenger(flutterPluginBinding.getApplicationContext(), channel, new Handler(Looper.getMainLooper()));
+
+        onTagReadEventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.ON_TAG_READ);
 
         channel.setMethodCallHandler(this);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -87,6 +90,7 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
             @Override
             public void onCreated(RfidManager rfid) {
                 rfidManager = rfid;
+                isInitialized = true;
             }
         });
     }
@@ -117,10 +121,14 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
                             }
                         }
                     }
-                    if (device.getName() != null && device.getName().equals("IH45")) {
+                    if (bluetoothAutoConnect && device.getName() != null && device.getName().equals("IH45")) {
                         bluetoothAdapter.stopLeScan(mLeScanCallback);
                         rfidManager.connect(device.getAddress());
-                        dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.CONNECTED);
+                        if (rfidManager.getReader() != null) {
+                            //dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.CONNECTED);
+                        } else {
+                            dartMessenger.sendReaderErrorEvent("Reader not connected");
+                        }
                     }
                 }
             };
@@ -128,69 +136,102 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-        switch (call.method) {
-            case "searchBluetoothDevices":
-                final boolean permissionGranted = isBluetoothPermissionGranted();
-                if (false) {
-                    result.error("Bluetooth permission not granted", "Permission not granted", null);
-                    return;
-                } else if (false) {
-                    result.error("Bluetooth not enabled", "Bluetooth not enabled", null);
-                } else {
-                    bluetoothAdapter.isEnabled();
-                    bluetoothAdapter.startLeScan(mLeScanCallback);
-                    result.success(true);
-                }
-                break;
-            case "getAvailableBluetoothDevices":
-                final List<Map<String, Object>> devices = new ArrayList<>();
-                for (BluetoothDeviceInfo info : bluetoothDeviceList) {
-                    devices.add(new HashMap<String, Object>() {{
-                        put("name", info.dev.getName());
-                        put("address", info.dev.getType());
-                        put("rssi", info.rssi);
-                    }});
-                }
-                result.success(devices);
-                break;
-            case "isBluetoothPermissionGranted":
-                result.success(isBluetoothPermissionGranted());
-                break;
-            case "createReader":
-                rfidManager.createReader();
-                rfidManager.getReader().setOnTagReadListener(dataListener);
-                result.success(true);
-                break;
-            case "connectReader":
-
-                result.success(true);
-                break;
-            case "disconnect":
-                if (rfidManager == null) {
-                    result.error("Reader not created", "Reader not created", null);
-                    return;
-                }
-                rfidManager.disconnect();
-                result.success(true);
-                break;
-            case "startListening":
-                if (rfidManager == null) {
-                    result.error("Reader not created", "Reader not created", null);
-                    return;
-                }
+        if (call.method.equals("initialize")) {
+            if (isInitialized) {
                 rfidManager.addEventListener(mEventListener);
                 result.success(true);
-                break;
-
-            case "onDevicesUpdated":
-                result.success(bluetoothDeviceList);
-                break;
-            case "readRfid":
-                startStream();
-                read();
-                result.success(true);
-                break;
+            } else {
+                result.error("Reader not initialized", "Reader not initialized", null);
+            }
+        } else if (call.method.equals("scanBluetoothDevices")) {
+            bluetoothAutoConnect = Boolean.TRUE.equals(call.arguments());
+            final boolean permissionGranted = isBluetoothPermissionGranted();
+            bluetoothAdapter.isEnabled();
+            bluetoothAdapter.startLeScan(mLeScanCallback);
+            result.success(true);
+        } else if (call.method.equals("disconnectDevice")) {
+            rfidManager.disconnect();
+            //dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.DISCONNECTED);
+            result.success(true);
+        } else if (call.method.equals("createReader")) {
+            rfidManager.createReader();
+            result.success(true);
+        } else if (call.method.equals("disableScanBluetoothDevices")) {
+            bluetoothAdapter.stopLeScan(mLeScanCallback);
+            result.success(true);
+        } else {
+            result.notImplemented();
         }
+//        switch (call.method) {
+//            case "initialize":
+//                if (isInitialized) {
+//                    rfidManager.addEventListener(mEventListener);
+//                    result.success(true);
+//                } else {
+//                    result.error("Reader not initialized", "Reader not initialized", null);
+//                }
+//                break;
+//            case "scanBluetoothDevices":
+//                bluetoothAutoConnect = Boolean.TRUE.equals(call.arguments());
+//                final boolean permissionGranted = isBluetoothPermissionGranted();
+//                if (false) {
+//                    result.error("Bluetooth permission not granted", "Permission not granted", null);
+//                    return;
+//                } else if (false) {
+//                    result.error("Bluetooth not enabled", "Bluetooth not enabled", null);
+//                } else {
+//                    bluetoothAdapter.isEnabled();
+//                    bluetoothAdapter.startLeScan(mLeScanCallback);
+//                    result.success(true);
+//                }
+//                break;
+//            case "disconnectDevice":
+//                rfidManager.disconnect();
+//                result.success(true);
+//                break;
+//            case "disconnectRfidReader":
+//                rfidManager.setAutoReconnect(false);
+//                rfidManager.disconnect();
+//                if (rfidManager.isConnected()) {
+//                    throw new RuntimeException("Reader not disconnected");
+//                } else {
+//                    dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.DISCONNECTED);
+//                }
+//                result.success(true);
+//                break;
+//            case "getAvailableBluetoothDevices":
+//                final List<Map<String, Object>> devices = new ArrayList<>();
+//                for (BluetoothDeviceInfo info : bluetoothDeviceList) {
+//                    devices.add(new HashMap<String, Object>() {{
+//                        put("name", info.dev.getName());
+//                        put("address", info.dev.getType());
+//                        put("rssi", info.rssi);
+//                    }});
+//                }
+//                result.success(devices);
+//                break;
+//            case "isBluetoothPermissionGranted":
+//                result.success(isBluetoothPermissionGranted());
+//                break;
+//            case "createReader":
+//                rfidManager.createReader();
+//                rfidManager.getReader().setOnTagReadListener(dataListener);
+//                result.success(true);
+//                break;
+//            case "disconnect":
+//                if (rfidManager == null) {
+//                    result.error("Reader not created", "Reader not created", null);
+//                    return;
+//                }
+//                rfidManager.disconnect();
+//                result.success(true);
+//                break;
+//            case "readRfid":
+//                startStream();
+//                read();
+//                result.success(true);
+//                break;
+
     }
 
     private boolean isReaderAvailable() {
@@ -258,13 +299,14 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
         @Override
         public void onDeviceConnected(Object o) {
-
             DriverManager.println("onDeviceConnected");
+            dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.CONNECTED);
         }
 
         @Override
         public void onDeviceDisconnected(Object o) {
             DriverManager.println("onDeviceDisconnected");
+            dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.DISCONNECTED);
         }
 
         @Override

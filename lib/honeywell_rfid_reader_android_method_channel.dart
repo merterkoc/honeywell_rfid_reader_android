@@ -1,88 +1,46 @@
-import 'dart:collection';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:honeywell_rfid_reader_android/model/bluetooh_device_info.dart';
+import 'package:honeywell_rfid_reader_android/constants/channel_address.dart';
 
-import 'honeywell_rfid_reader_android_platform_interface.dart';
+import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
 
-/// An implementation of [HoneywellRfidReaderAndroidPlatform] that uses method channels.
+/// An implementation of [HoneywellRfidReaderPlatform] that uses method
+/// channels.
 class MethodChannelHoneywellRfidReaderAndroid
-    extends HoneywellRfidReaderAndroidPlatform {
+    extends HoneywellRfidReaderPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final methodChannel = const MethodChannel('honeywell_rfid_reader_android');
+  final methodChannel = MethodChannel(ChannelAddress.MAIN_CHANNEL.name);
 
+  @visibleForTesting
   final EventChannel eventChannel =
-      const EventChannel('honeywell_rfid_reader_android/onTagRead');
-  final EventChannel connectionStatusChannel =
-      const EventChannel('RFID_CONNECTION_STATUS_CHANGED');
-
-  void startListenTag() {
-    connectionStatusChannel.receiveBroadcastStream().listen((event) {
-      print(event);
-    });
-
-    eventChannel.receiveBroadcastStream().listen((event) {
-      print(event);
-    });
-  }
-
-  void startListenConnectionStatus() {}
+      EventChannel(ChannelAddress.ON_TAG_READ.name);
 
   @override
-  Stream<dynamic> connectionStatusChanged() {
-    return connectionStatusChannel.receiveBroadcastStream();
+  Future<void> initialize() {
+    return methodChannel.invokeMethod('initialize');
   }
 
   @override
-  Future<void> createReader() async {
-    await methodChannel.invokeMethod('createReader');
+  Future<void> scanBluetoothDevices({bool bluetoothAutoConnect = false}) {
+    return methodChannel.invokeMethod(
+      'scanBluetoothDevices',
+      bluetoothAutoConnect,
+    );
   }
 
   @override
-  Future<void> connectReader() async {
-    await methodChannel.invokeMethod('connectReader');
+  Future<void> disableScanBluetoothDevices() {
+    return methodChannel.invokeMethod('disableScanBluetoothDevices');
   }
 
   @override
-  Future<void> disconnect() async {
-    await methodChannel.invokeMethod('disconnect');
+  Future<void> disconnectDevice() async {
+    await methodChannel.invokeMethod('disconnectDevice');
   }
 
   @override
-  Future<void> startListening() async {
-    await methodChannel.invokeMethod('startListening');
-  }
-
-  @override
-  Future<void> searchBluetoothDevices() async {
-    await methodChannel.invokeMethod('searchBluetoothDevices');
-  }
-
-  @override
-  Future<void> onDevicesUpdated() async {
-    await methodChannel.invokeMethod('onDevicesUpdated');
-  }
-
-  @override
-  Future<bool> isBluetoothPermissionGranted() async {
-    final isGranted =
-        await methodChannel.invokeMethod<bool>('isBluetoothPermissionGranted');
-    return isGranted!;
-  }
-
-  @override
-  Future<List<HashMap<String, dynamic>>> getAvailableBluetoothDevices() async {
-    final bluetoothDeviceInfo =
-        await methodChannel.invokeListMethod<HashMap<String, dynamic>>(
-            'getAvailableBluetoothDevices');
-    return bluetoothDeviceInfo! as List<HashMap<String, dynamic>>;
-  }
-
-  @override
-  Future<void> readRfid() async {
-    await methodChannel.invokeMethod('readRfid');
-    startListenTag();
+  Future<void> createReader() {
+    return methodChannel.invokeMethod('createReader');
   }
 }
