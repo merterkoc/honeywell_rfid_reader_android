@@ -1,41 +1,343 @@
 package com.example.honeywell_rfid_reader_android;
 
+import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+
+import com.example.honeywell_rfid_reader_android.bluetooth.BluetoothDeviceInfo;
+import com.example.honeywell_rfid_reader_android.constants.ChannelAddress;
+import com.example.honeywell_rfid_reader_android.helper.observer.TagChangeBroadcastReceiver;
+import com.example.honeywell_rfid_reader_android.helper.observer.TagChangeListener;
+import com.example.honeywell_rfid_reader_android.helper.observer.TagInfo;
+import com.example.honeywell_rfid_reader_android.messages.DartMessenger;
+import com.example.honeywell_rfid_reader_android.messages.model.ConnectionStatus;
+import com.honeywell.rfidservice.EventListener;
 import com.honeywell.rfidservice.RfidManager;
+import com.honeywell.rfidservice.TriggerMode;
+import com.honeywell.rfidservice.rfid.OnTagReadListener;
+import com.honeywell.rfidservice.rfid.RfidReader;
+import com.honeywell.rfidservice.rfid.TagAdditionData;
+import com.honeywell.rfidservice.rfid.TagReadData;
+import com.honeywell.rfidservice.utils.ByteUtils;
 
-/** HoneywellRfidReaderAndroidPlugin */
+import java.sql.DriverManager;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * HoneywellRfidReaderAndroidPlugin
+ */
 public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCallHandler {
-  /// The MethodChannel that will the communication between Flutter and native Android
-  ///
-  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-  /// when the Flutter Engine is detached from the Activity
-  private MethodChannel channel;
+    private MethodChannel channel;
 
-  private RfidManager rfidManager;
+    private DartMessenger dartMessenger;
+    private EventChannel onTagReadEventChannel;
 
-  @Override
-  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "honeywell_rfid_reader_android");
-    channel.setMethodCallHandler(this);
-  }
+    private final String[] mPermissions = new String[]{
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    };
 
-  @Override
-  public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (call.method.equals("getPlatformVersion")) {
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-    } else {
-      result.notImplemented();
+    private final boolean[] mPermissionGranted = new boolean[]{
+            false, false
+    };
+
+    private final List<String> mRequestPermissions = new ArrayList<>();
+    private static final int PERMISSION_REQUEST_CODE = 1;
+
+    private RfidManager rfidManager;
+
+
+    private final List<BluetoothDeviceInfo> bluetoothDeviceList = new ArrayList<>();
+
+    private long mPrevListUpdateTime;
+
+    private BluetoothAdapter bluetoothAdapter;
+
+    private final List<TagInfo> mTagDataList = new ArrayList<>();
+
+    private final TagChangeBroadcastReceiver tagChangeBroadcastReceiver = new TagChangeBroadcastReceiver();
+
+
+    private int mTargetSwitchInterval = 3000;
+
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.METHOD_CHANNEL);
+        onTagReadEventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.ON_TAG_READ);
+        dartMessenger = new DartMessenger(flutterPluginBinding.getApplicationContext(), channel, new Handler(Looper.getMainLooper()));
+
+        channel.setMethodCallHandler(this);
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        RfidManager.create(flutterPluginBinding.getApplicationContext(), new RfidManager.CreatedCallback() {
+            @Override
+            public void onCreated(RfidManager rfid) {
+                rfidManager = rfid;
+            }
+        });
     }
-  }
 
-  @Override
-  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    channel.setMethodCallHandler(null);
-  }
+    private final BluetoothAdapter.LeScanCallback mLeScanCallback =
+            new BluetoothAdapter.LeScanCallback() {
+                @Override
+                public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                    if (device.getName() != null && !device.getName().isEmpty()) {
+                        synchronized (bluetoothDeviceList) {
+                            boolean newDevice = true;
+
+                            for (BluetoothDeviceInfo info : bluetoothDeviceList) {
+                                if (device.getAddress().equals(info.dev.getAddress())) {
+                                    newDevice = false;
+                                    info.rssi = rssi;
+                                }
+                            }
+
+                            if (newDevice) {
+                                bluetoothDeviceList.add(new BluetoothDeviceInfo(device, rssi));
+                            }
+
+                            long cur = System.currentTimeMillis();
+
+                            if (newDevice || cur - mPrevListUpdateTime > 500) {
+                                mPrevListUpdateTime = cur;
+                            }
+                        }
+                    }
+                    if (device.getName() != null && device.getName().equals("IH45")) {
+                        bluetoothAdapter.stopLeScan(mLeScanCallback);
+                        rfidManager.connect(device.getAddress());
+                        dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.CONNECTED);
+                    }
+                }
+            };
+
+
+    @Override
+    public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+        switch (call.method) {
+            case "searchBluetoothDevices":
+                final boolean permissionGranted = isBluetoothPermissionGranted();
+                if (false) {
+                    result.error("Bluetooth permission not granted", "Permission not granted", null);
+                    return;
+                } else if (false) {
+                    result.error("Bluetooth not enabled", "Bluetooth not enabled", null);
+                } else {
+                    bluetoothAdapter.isEnabled();
+                    bluetoothAdapter.startLeScan(mLeScanCallback);
+                    result.success(true);
+                }
+                break;
+            case "getAvailableBluetoothDevices":
+                final List<Map<String, Object>> devices = new ArrayList<>();
+                for (BluetoothDeviceInfo info : bluetoothDeviceList) {
+                    devices.add(new HashMap<String, Object>() {{
+                        put("name", info.dev.getName());
+                        put("address", info.dev.getType());
+                        put("rssi", info.rssi);
+                    }});
+                }
+                result.success(devices);
+                break;
+            case "isBluetoothPermissionGranted":
+                result.success(isBluetoothPermissionGranted());
+                break;
+            case "createReader":
+                rfidManager.createReader();
+                rfidManager.getReader().setOnTagReadListener(dataListener);
+                result.success(true);
+                break;
+            case "connectReader":
+
+                result.success(true);
+                break;
+            case "disconnect":
+                if (rfidManager == null) {
+                    result.error("Reader not created", "Reader not created", null);
+                    return;
+                }
+                rfidManager.disconnect();
+                result.success(true);
+                break;
+            case "startListening":
+                if (rfidManager == null) {
+                    result.error("Reader not created", "Reader not created", null);
+                    return;
+                }
+                rfidManager.addEventListener(mEventListener);
+                result.success(true);
+                break;
+
+            case "onDevicesUpdated":
+                result.success(bluetoothDeviceList);
+                break;
+            case "readRfid":
+                startStream();
+                read();
+                result.success(true);
+                break;
+        }
+    }
+
+    private boolean isReaderAvailable() {
+        return rfidManager.getReader() != null && rfidManager.getReader().available();
+    }
+
+    private void read() {
+        if (!isReaderAvailable()) {
+            return;
+        }
+        synchronized (mTagDataList) {
+            mTagDataList.clear();
+        }
+        rfidManager.getReader().setOnTagReadListener(dataListener);
+        rfidManager.getReader().read(TagAdditionData.get("None"));
+    }
+
+    private void startStream() {
+        onTagReadEventChannel.setStreamHandler(new EventChannel.StreamHandler() {
+            @Override
+            public void onListen(Object o, EventChannel.EventSink eventSink) {
+                tagChangeBroadcastReceiver.setListener(new TagChangeListener() {
+                    @Override
+                    public void onTagChange(TagInfo tagInfo) {
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                eventSink.success(tagInfo.tagReadData.getEpcHexStr());
+                            }
+                        });
+                    }
+                });
+            }
+
+            @Override
+            public void onCancel(Object o) {
+            }
+        });
+    }
+
+    private boolean isBluetoothPermissionGranted() {
+
+        for (int i = 0; i < mPermissions.length; ++i) {
+            if (Manifest.permission.ACCESS_FINE_LOCATION.equals(mPermissions[i])) {
+                return mPermissionGranted[i];
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        channel.setMethodCallHandler(null);
+    }
+
+
+    private final EventListener mEventListener = new EventListener() {
+
+        @Override
+        public void onReadRemoteRssi(BluetoothDevice bluetoothDevice, int i) {
+            EventListener.super.onReadRemoteRssi(bluetoothDevice, i);
+            Log.d("onReadRemoteRssi", "onReadRemoteRssi");
+        }
+
+        @Override
+        public void onDeviceConnected(Object o) {
+
+            DriverManager.println("onDeviceConnected");
+        }
+
+        @Override
+        public void onDeviceDisconnected(Object o) {
+            DriverManager.println("onDeviceDisconnected");
+        }
+
+        @Override
+        public void onUsbDeviceAttached(Object o) {
+
+        }
+
+        @Override
+        public void onUsbDeviceDetached(Object o) {
+
+        }
+
+        @Override
+        public void onReaderCreated(boolean b, final RfidReader rfidReader) {
+            DriverManager.println("onReaderCreated");
+        }
+
+        @Override
+        public void onRfidTriggered(boolean b) {
+            Log.d("onRfidTriggered", "onRfidTriggered");
+        }
+
+        @Override
+        public void onTriggerModeSwitched(TriggerMode triggerMode) {
+        }
+
+        @Override
+        public void onReceivedFindingTag(int i) {
+
+        }
+    };
+
+
+    private final OnTagReadListener dataListener = new OnTagReadListener() {
+        @Override
+        public void onTagRead(final TagReadData[] t) {
+            synchronized (mTagDataList) {
+                for (TagReadData trd : t) {
+                    String epc = trd.getEpcHexStr();
+                    if (true) {
+                        epc += ByteUtils.bytes2HexStr(trd.getAdditionData());
+                    }
+                    boolean doUpdate = true;
+                    for (TagInfo tagInfo : mTagDataList) {
+                        if (true) {
+                            String key = tagInfo.tagReadData.getEpcHexStr()
+                                    + ByteUtils.bytes2HexStr(tagInfo.tagReadData.getAdditionData());
+                            if (key.equals(epc)) {
+                                ++tagInfo.count;
+                                doUpdate = false;
+                                break;
+                            }
+                        } else {
+                            if (tagInfo.tagReadData.getEpcHexStr().equals(trd.getEpcHexStr())) {
+                                ++tagInfo.count;
+                                doUpdate = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (doUpdate) {
+                        TagInfo tagInfo = new TagInfo();
+                        tagInfo.tagReadData = trd;
+                        tagInfo.count = 1;
+                        mTagDataList.add(tagInfo);
+                        if (tagChangeBroadcastReceiver.callback != null) {
+                            tagChangeBroadcastReceiver.callback.onTagChange(tagInfo);
+                        }
+
+                    }
+                }
+            }
+        }
+    };
+
 }
