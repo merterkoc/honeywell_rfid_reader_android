@@ -11,6 +11,7 @@ class RFIDManager extends Observer {
     _instance ??= RFIDManager._internal();
     _honeywellPlugin = HoneywellRfidReaderPlatform.instance;
     HandleMethod.initialize(_instance!);
+    HandleEvent.initialize(_instance!);
     return _instance!;
   }
 
@@ -25,6 +26,10 @@ class RFIDManager extends Observer {
 
   Stream<ConnectionStatus> get connectionStatusChangedStream =>
       _connectionStatusChanged.stream;
+
+  final _tagRead = StreamController<String>.broadcast();
+
+  Stream<String> get tagReadStream => _tagRead.stream;
 
   Future<void> initialize() async {
     await _honeywellPlugin.initialize();
@@ -54,8 +59,22 @@ class RFIDManager extends Observer {
     await _honeywellPlugin.createReader();
   }
 
+  Future<void> readStart() async {
+    await _honeywellPlugin.readStart();
+  }
+
+  Future<void> readStop() async {
+    await _honeywellPlugin.readStop();
+  }
+
+
   @override
   void notifyConnectionStatus(ConnectionStatus status) {
     _connectionStatusChanged.add(status);
+  }
+
+  @override
+  void notifyTagRead(String tagRead) {
+    _tagRead.add(tagRead);
   }
 }

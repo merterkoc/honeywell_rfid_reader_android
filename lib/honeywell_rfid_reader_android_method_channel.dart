@@ -43,4 +43,14 @@ class MethodChannelHoneywellRfidReaderAndroid
   Future<void> createReader() {
     return methodChannel.invokeMethod('createReader');
   }
+
+  @override
+  Future<void> readStart() {
+    return methodChannel.invokeMethod('readStart');
+  }
+
+  @override
+  Future<void> readStop() {
+    return methodChannel.invokeMethod('readStop');
+  }
 }

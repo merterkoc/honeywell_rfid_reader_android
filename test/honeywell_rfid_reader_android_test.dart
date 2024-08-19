@@ -17,7 +17,7 @@ class MockHoneywellRfidReaderAndroidPlatform
       );
     });
 
-    test('getPlatformVersion', () async {
+    test('MethodChannelHoneywellRfidReaderAndroid', () async {
       final fakePlatform = MockHoneywellRfidReaderAndroidPlatform();
       HoneywellRfidReaderPlatform.instance = fakePlatform;
     });
@@ -43,13 +43,26 @@ class MockHoneywellRfidReaderAndroidPlatform
 
   @override
   Future<void> disableScanBluetoothDevices() {
-    // TODO: (mert) implement disableScanBluetoothDevices
+    // TODO(mert): implement disableScanBluetoothDevices
     throw UnimplementedError();
   }
 
   @override
   Future<void> createReader() {
     // TODO(mert): implement createReader
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> readStart() {
+    // TODO(mert): implement readStart
+
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> readStop() {
+    // TODO(mert): implement readStop
     throw UnimplementedError();
   }
 }

@@ -15,5 +15,11 @@ class Observer {
     }
   }
 
+  void notifyTagRead(String tagRead) {
+    for (final observer in _observers) {
+      observer.notifyTagRead(tagRead);
+    }
+  }
+
   final List<Observer> _observers = [];
 }

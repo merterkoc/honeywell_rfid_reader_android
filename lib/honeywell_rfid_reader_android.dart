@@ -30,4 +30,14 @@ class HoneywellRfidReaderAndroid implements HoneywellRfidReaderPlatform {
   Future<void> createReader() async {
     await instance.createReader();
   }
+
+  @override
+  Future<void> readStart() async {
+    await instance.readStart();
+  }
+
+  @override
+  Future<void> readStop() async {
+    await instance.readStop();
+  }
 }

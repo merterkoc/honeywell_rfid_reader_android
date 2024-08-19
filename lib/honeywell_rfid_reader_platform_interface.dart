@@ -35,4 +35,8 @@ abstract class HoneywellRfidReaderPlatform extends PlatformInterface {
   Future<void> disconnectDevice();
 
   Future<void> createReader();
+
+  Future<void> readStart();
+
+  Future<void> readStop();
 }

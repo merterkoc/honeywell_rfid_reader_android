@@ -13,10 +13,13 @@ class _HomePageState extends State<HomePage> {
   ConnectionStatus? _connectionStatus;
   late final RFIDManager rfidManager;
   bool isLoading = false;
+  bool isReaderCreated = false;
+  List<String> tags = [];
 
   @override
   void initState() {
     super.initState();
+    initializeRFIDReader();
   }
 
   Future<void> initializeRFIDReader() async {
@@ -25,6 +28,11 @@ class _HomePageState extends State<HomePage> {
     rfidManager.connectionStatusChangedStream.listen((status) {
       setState(() {
         _connectionStatus = status;
+      });
+    });
+    rfidManager.tagReadStream.listen((tagRead) {
+      setState(() {
+        tags.add(tagRead);
       });
     });
   }
@@ -89,16 +97,68 @@ class _HomePageState extends State<HomePage> {
                       setState(() {
                         isLoading = true;
                       });
-                      if (_connectionStatus != ConnectionStatus.CONNECTED)
+                      if (_connectionStatus != ConnectionStatus.CONNECTED) {
                         return;
+                      }
                       await rfidManager.createReader();
-                      print('create reader');
+                      debugPrint('created reader');
                       setState(() {
+                        isReaderCreated = true;
                         isLoading = false;
                       });
                     },
                   );
                 }),
+              ),
+              Opacity(
+                opacity: isReaderCreated ? 1 : 0.5,
+                child: Builder(builder: (context) {
+                  return ElevatedButton.icon(
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Read'),
+                    onPressed: () async {
+                      if (_connectionStatus != ConnectionStatus.CONNECTED ||
+                          !isReaderCreated) return;
+                      setState(() {
+                        isReaderCreated = true;
+                      });
+                      await rfidManager.readStart();
+                      debugPrint('read started');
+                    },
+                  );
+                }),
+              ),
+              Opacity(
+                opacity: isReaderCreated ? 1 : 0.5,
+                child: Builder(builder: (context) {
+                  return ElevatedButton.icon(
+                    icon: const Icon(Icons.stop),
+                    label: const Text('Stop Read'),
+                    onPressed: () async {
+                      if (_connectionStatus != ConnectionStatus.CONNECTED ||
+                          !isReaderCreated) return;
+                      setState(() {
+                        isReaderCreated = true;
+                      });
+                      await rfidManager.readStop();
+                      debugPrint('read stopped');
+                    },
+                  );
+                }),
+              ),
+              ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: tags.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    subtitle: Text(index.toString()),
+                    title: Text(tags[index]),
+                  );
+                },
               ),
             ],
           ),

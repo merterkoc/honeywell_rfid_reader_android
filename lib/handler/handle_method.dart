@@ -22,3 +22,18 @@ class HandleMethod extends ObserverList {
     });
   }
 }
+
+class HandleEvent extends ObserverList {
+  static final EventChannel _channel =
+      EventChannel(ChannelAddress.ON_TAG_READ.name);
+
+  static void initialize(Observer observer) {
+    _channel.receiveBroadcastStream().listen((dynamic event) {
+      if (event is String) {
+        observer.notifyTagRead(event);
+      } else {
+        throw Exception('Invalid event value');
+      }
+    });
+  }
+}

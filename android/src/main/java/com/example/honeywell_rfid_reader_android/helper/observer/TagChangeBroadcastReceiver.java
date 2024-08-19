@@ -5,9 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.example.honeywell_rfid_reader_android.messages.DartMessenger;
+
 public class TagChangeBroadcastReceiver extends BroadcastReceiver {
 
     public TagChangeListener callback;
+
+    public DartMessenger dartMessenger;
 
     public void setListener(TagChangeListener callback) {
         this.callback = callback;
