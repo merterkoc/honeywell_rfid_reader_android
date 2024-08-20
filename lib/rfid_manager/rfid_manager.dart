@@ -4,6 +4,7 @@ import 'package:honeywell_rfid_reader_android/handler/handle_method.dart';
 import 'package:honeywell_rfid_reader_android/handler/util/observer/observer.dart';
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
 import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
+import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class RFIDManager extends Observer {
@@ -31,8 +32,17 @@ class RFIDManager extends Observer {
 
   Stream<String> get tagReadStream => _tagRead.stream;
 
-  Future<void> initialize() async {
-    await _honeywellPlugin.initialize();
+  final _readStatusChanged = StreamController<bool>.broadcast();
+
+  Stream<bool> get readStatusChangedStream => _readStatusChanged.stream;
+
+  final _bluetoothDeviceFound = StreamController<MyBluetoothDevice>.broadcast();
+
+  Stream<MyBluetoothDevice> get bluetoothDeviceFoundStream =>
+      _bluetoothDeviceFound.stream;
+
+  void initialize() {
+    //checkConnection();
   }
 
   Future<void> scanBluetoothDevices({bool bluetoothAutoConnect = false}) async {
@@ -67,6 +77,24 @@ class RFIDManager extends Observer {
     await _honeywellPlugin.readStop();
   }
 
+  Future<bool> bluetoothState() async {
+    return _honeywellPlugin.bluetoothState();
+  }
+
+  Future<void> bluetoothEnable() async {
+    await _honeywellPlugin.bluetoothEnable();
+  }
+
+  Future<void> bluetoothDisable() async {
+    await _honeywellPlugin.bluetoothDisable();
+  }
+
+  Future<void> checkConnection() async {
+    final connected = await _honeywellPlugin.isConnected();
+    if (connected) {
+      _connectionStatusChanged.add(ConnectionStatus.CONNECTED);
+    }
+  }
 
   @override
   void notifyConnectionStatus(ConnectionStatus status) {
@@ -76,5 +104,24 @@ class RFIDManager extends Observer {
   @override
   void notifyTagRead(String tagRead) {
     _tagRead.add(tagRead);
+  }
+
+  @override
+  void notifyReadStatus({required bool isReading}) {
+    _readStatusChanged.add(isReading);
+  }
+
+  @override
+  void notifyBluetoothDeviceFound(MyBluetoothDevice device) {
+    _bluetoothDeviceFound.add(device);
+  }
+
+  Future<void> connectDevice(MyBluetoothDevice device) async {
+    await _honeywellPlugin.connectDevice(device);
+  }
+
+  void close() {
+    _connectionStatusChanged.close();
+    _tagRead.close();
   }
 }

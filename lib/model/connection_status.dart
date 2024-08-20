@@ -15,3 +15,9 @@ enum ConnectionStatus {
         .firstWhere((element) => element.value == value);
   }
 }
+
+extension ConnectionStatusExtension on ConnectionStatus {
+  bool get isConnected => this == ConnectionStatus.CONNECTED;
+
+  bool get isDisconnected => this == ConnectionStatus.DISCONNECTED;
+}

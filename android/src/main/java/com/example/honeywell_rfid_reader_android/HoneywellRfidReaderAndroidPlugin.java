@@ -15,7 +15,9 @@ import com.example.honeywell_rfid_reader_android.bluetooth.BluetoothDeviceInfo;
 import com.example.honeywell_rfid_reader_android.constants.ChannelAddress;
 import com.example.honeywell_rfid_reader_android.helper.observer.TagChangeBroadcastReceiver;
 import com.example.honeywell_rfid_reader_android.helper.observer.TagInfo;
+import com.example.honeywell_rfid_reader_android.messages.DartEventBroadcaster;
 import com.example.honeywell_rfid_reader_android.messages.DartMessenger;
+import com.example.honeywell_rfid_reader_android.messages.MyBluetoothDevice;
 import com.example.honeywell_rfid_reader_android.messages.model.ConnectionStatus;
 import com.honeywell.rfidservice.EventListener;
 import com.honeywell.rfidservice.RfidManager;
@@ -46,7 +48,9 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
     private MethodChannel channel;
     private DartMessenger dartMessenger;
 
-    static EventChannel.EventSink barcodeStream;
+    private DartEventBroadcaster dartEventBroadcaster;
+
+    static EventChannel.EventSink eventSink;
     private EventChannel eventChannel;
 
     private final String[] mPermissions = new String[]{
@@ -82,6 +86,7 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.MAIN_CHANNEL);
         dartMessenger = new DartMessenger(flutterPluginBinding.getApplicationContext(), channel, new Handler(Looper.getMainLooper()));
+        dartEventBroadcaster = new DartEventBroadcaster(flutterPluginBinding.getApplicationContext(), new Handler(Looper.getMainLooper()));
 
         eventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), ChannelAddress.ON_TAG_READ);
         eventChannel.setStreamHandler(this);
@@ -89,7 +94,6 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
         IntentFilter filter = new IntentFilter("action.TAG_CHANGE");
         filter.addAction("action.TAG_CHANGE");
         flutterPluginBinding.getApplicationContext().registerReceiver(tagChangeBroadcastReceiver, filter);
-        ;
         channel.setMethodCallHandler(this);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         RfidManager.create(flutterPluginBinding.getApplicationContext(), new RfidManager.CreatedCallback() {
@@ -125,14 +129,16 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
                             if (newDevice || cur - mPrevListUpdateTime > 500) {
                                 mPrevListUpdateTime = cur;
+
+                                dartEventBroadcaster.sendBluetoothDeviceFoundEvent(new MyBluetoothDevice(device.getName(), device.getAddress(), String.valueOf(rssi)));
+                                if (bluetoothAutoConnect && device.getName() != null && device.getName().equals("IH45")) {
+                                    bluetoothAdapter.stopLeScan(mLeScanCallback);
+                                    rfidManager.connect(device.getAddress());
+                                    if (rfidManager.getReader() == null) {
+                                        dartMessenger.sendReaderErrorEvent("Reader not connected");
+                                    }
+                                }
                             }
-                        }
-                    }
-                    if (bluetoothAutoConnect && device.getName() != null && device.getName().equals("IH45")) {
-                        bluetoothAdapter.stopLeScan(mLeScanCallback);
-                        rfidManager.connect(device.getAddress());
-                        if (rfidManager.getReader() == null) {
-                            dartMessenger.sendReaderErrorEvent("Reader not connected");
                         }
                     }
                 }
@@ -142,14 +148,19 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         if (call.method.equals("scanBluetoothDevices")) {
-            bluetoothAutoConnect = Boolean.TRUE.equals(call.arguments());
-            final boolean permissionGranted = isBluetoothPermissionGranted();
-            bluetoothAdapter.isEnabled();
-            bluetoothAdapter.startLeScan(mLeScanCallback);
-            result.success(true);
+            try {
+                bluetoothAutoConnect = Boolean.TRUE.equals(call.arguments());
+                if (bluetoothAdapter.isEnabled()) {
+                    bluetoothAdapter.startLeScan(mLeScanCallback);
+                    result.success(true);
+                } else {
+                    result.error("110", "Bluetooth not enabled", "Bluetooth not enabled");
+                }
+            } catch (SecurityException e) {
+                result.error("Error", e.getMessage(), null);
+            }
         } else if (call.method.equals("disconnectDevice")) {
             rfidManager.disconnect();
-            //dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.DISCONNECTED);
             result.success(true);
         } else if (call.method.equals("createReader")) {
             rfidManager.createReader();
@@ -162,6 +173,25 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
             result.success(true);
         } else if (call.method.equals("readStop")) {
             stopRead();
+            result.success(true);
+        } else if (call.method.equals("bluetoothState")) {
+            result.success(bluetoothAdapter.isEnabled());
+        } else if (call.method.equals("bluetoothEnable")) {
+            bluetoothAdapter.enable();
+            result.success(true);
+        } else if (call.method.equals("bluetoothDisable")) {
+            bluetoothAdapter.disable();
+            result.success(true);
+        } else if (call.method.equals("checkConnection")) {
+            result.success(rfidManager.isConnected());
+        } else if (call.method.equals("connectDevice")) {
+            String deviceAddress = call.arguments();
+            if (rfidManager.isConnected()) {
+                rfidManager.disconnect();
+            } else if (!rfidManager.connect(deviceAddress)) {
+                result.error("Error", "Device not found", null);
+            }
+
             result.success(true);
         } else {
             result.notImplemented();
@@ -251,6 +281,7 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
         }
         rfidManager.getReader().setOnTagReadListener(dataListener);
         rfidManager.getReader().read(TagAdditionData.NONE);
+        dartMessenger.sendRfidReadStatusEvent(true);
     }
 
     private void stopRead() {
@@ -262,6 +293,7 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
         }
         rfidManager.getReader().removeOnTagReadListener(dataListener);
         rfidManager.getReader().stopRead();
+        dartMessenger.sendRfidReadStatusEvent(false);
     }
 
     private boolean isBluetoothPermissionGranted() {
@@ -373,8 +405,8 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
                         new Handler(Looper.getMainLooper()).post(new Runnable() {
                             @Override
                             public void run() {
-                                if (barcodeStream != null) {
-                                    barcodeStream.success(tagInfo.tagReadData.getEpcHexStr());
+                                if (eventSink != null) {
+                                    dartEventBroadcaster.sendRfidReadEvent(tagInfo.tagReadData.getEpcHexStr());
                                 }
                             }
                         });
@@ -387,7 +419,9 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
     @Override
     public void onListen(Object arguments, EventChannel.EventSink events) {
         try {
-            barcodeStream = events;
+            eventSink = events;
+            dartEventBroadcaster.setEventSink(eventSink);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -396,7 +430,7 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
     @Override
     public void onCancel(Object arguments) {
         try {
-            barcodeStream = null;
+            eventSink = null;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

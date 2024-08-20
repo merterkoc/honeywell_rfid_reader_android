@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:honeywell_rfid_reader_android/constants/channel_address.dart';
 
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
+import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
 
 /// An implementation of [HoneywellRfidReaderPlatform] that uses method
 /// channels.
@@ -22,7 +23,7 @@ class MethodChannelHoneywellRfidReaderAndroid
   }
 
   @override
-  Future<void> scanBluetoothDevices({bool bluetoothAutoConnect = false}) {
+  Future<void> scanBluetoothDevices({bool bluetoothAutoConnect = false}) async {
     return methodChannel.invokeMethod(
       'scanBluetoothDevices',
       bluetoothAutoConnect,
@@ -52,5 +53,34 @@ class MethodChannelHoneywellRfidReaderAndroid
   @override
   Future<void> readStop() {
     return methodChannel.invokeMethod('readStop');
+  }
+
+  @override
+  Future<void> bluetoothDisable() async {
+    await methodChannel.invokeMethod('bluetoothDisable');
+  }
+
+  @override
+  Future<void> bluetoothEnable() async {
+    await methodChannel.invokeMethod('bluetoothEnable');
+  }
+
+  @override
+  Future<bool> bluetoothState() async {
+    return methodChannel
+        .invokeMethod('bluetoothState')
+        .then((value) => value as bool);
+  }
+
+  @override
+  Future<bool> isConnected() async {
+    return methodChannel
+        .invokeMethod('checkConnection')
+        .then((value) => value as bool);
+  }
+
+  @override
+  Future<void> connectDevice(MyBluetoothDevice device) async {
+    await methodChannel.invokeMethod('connectDevice', device.address);
   }
 }

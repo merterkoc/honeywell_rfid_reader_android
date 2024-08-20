@@ -1,4 +1,5 @@
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
+import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
 
 class HoneywellRfidReaderAndroid implements HoneywellRfidReaderPlatform {
   static HoneywellRfidReaderPlatform get instance =>
@@ -39,5 +40,30 @@ class HoneywellRfidReaderAndroid implements HoneywellRfidReaderPlatform {
   @override
   Future<void> readStop() async {
     await instance.readStop();
+  }
+
+  @override
+  Future<void> bluetoothDisable() async {
+    await instance.bluetoothDisable();
+  }
+
+  @override
+  Future<void> bluetoothEnable() async {
+    await instance.bluetoothEnable();
+  }
+
+  @override
+  Future<bool> bluetoothState() async {
+    return instance.bluetoothState();
+  }
+
+  @override
+  Future<bool> isConnected() async {
+    return instance.isConnected();
+  }
+
+  @override
+  Future<void> connectDevice(MyBluetoothDevice device) async {
+    return instance.connectDevice(device);
   }
 }

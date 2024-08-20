@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_android_method_channel.dart';
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
+import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockHoneywellRfidReaderAndroidPlatform
@@ -63,6 +64,36 @@ class MockHoneywellRfidReaderAndroidPlatform
   @override
   Future<void> readStop() {
     // TODO(mert): implement readStop
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> bluetoothDisable() {
+    // TODO(mert): implement bluetoothDisable
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> bluetoothEnable() {
+    // TODO(mert): implement bluetoothEnable
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> bluetoothState() {
+    // TODO(mert): implement bluetoothState
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> isConnected() {
+    // TODO(mert): implement isConnected
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> connectDevice(MyBluetoothDevice device) {
+    // TODO(mert): implement connectDevice
     throw UnimplementedError();
   }
 }

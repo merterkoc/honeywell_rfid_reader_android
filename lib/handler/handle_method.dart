@@ -1,8 +1,11 @@
+import 'dart:collection';
+
 import 'package:flutter/services.dart';
 import 'package:honeywell_rfid_reader_android/constants/channel_address.dart';
 import 'package:honeywell_rfid_reader_android/handler/util/observer/observer.dart';
 import 'package:honeywell_rfid_reader_android/handler/util/observer/observer_list.dart';
 import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
+import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
 
 class HandleMethod extends ObserverList {
   static final MethodChannel _channel =
@@ -15,6 +18,11 @@ class HandleMethod extends ObserverList {
           observer.notifyConnectionStatus(
             ConnectionStatus.values[
                 (call.arguments as Map<dynamic, dynamic>)['status'] as int],
+          );
+        case 'RFID_READ_STATUS_CHANGED':
+          observer.notifyReadStatus(
+            isReading:
+                (call.arguments as Map<dynamic, dynamic>)['isReading'] as bool,
           );
         default:
           throw MissingPluginException('Method not implemented');
@@ -29,10 +37,18 @@ class HandleEvent extends ObserverList {
 
   static void initialize(Observer observer) {
     _channel.receiveBroadcastStream().listen((dynamic event) {
-      if (event is String) {
-        observer.notifyTagRead(event);
-      } else {
-        throw Exception('Invalid event value');
+      final eventType = (event as Map<dynamic, dynamic>)['eventType'] as String;
+      if (eventType == 'RFID_READ') {
+        observer.notifyTagRead(event['data'] as String);
+      } else if (eventType == 'BLUETOOTH_DEVICE_FOUND') {
+        Map<String, dynamic>.from(event['device'] as Map<dynamic, dynamic>);
+        observer.notifyBluetoothDeviceFound(
+          MyBluetoothDevice.fromJson(
+            Map<String, dynamic>.from(
+              event['device'] as Map<dynamic, dynamic>,
+            ),
+          ),
+        );
       }
     });
   }

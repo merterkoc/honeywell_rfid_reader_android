@@ -1,4 +1,5 @@
 import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
+import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
 
 class Observer {
   void addObserver(Observer observer) {
@@ -18,6 +19,18 @@ class Observer {
   void notifyTagRead(String tagRead) {
     for (final observer in _observers) {
       observer.notifyTagRead(tagRead);
+    }
+  }
+
+  void notifyReadStatus({required bool isReading}) {
+    for (final observer in _observers) {
+      observer.notifyReadStatus(isReading: isReading);
+    }
+  }
+
+  void notifyBluetoothDeviceFound(MyBluetoothDevice device) {
+    for (final observer in _observers) {
+      observer.notifyBluetoothDeviceFound(device);
     }
   }
 

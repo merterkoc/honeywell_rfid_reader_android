@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_android_method_channel.dart';
+import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 abstract class HoneywellRfidReaderPlatform extends PlatformInterface {
@@ -39,4 +40,14 @@ abstract class HoneywellRfidReaderPlatform extends PlatformInterface {
   Future<void> readStart();
 
   Future<void> readStop();
+
+  Future<bool> bluetoothState();
+
+  Future<void> bluetoothEnable();
+
+  Future<void> bluetoothDisable();
+
+  Future<bool> isConnected();
+
+  Future<void> connectDevice(MyBluetoothDevice device);
 }

@@ -40,6 +40,15 @@ public class DartMessenger {
                 });
     }
 
+    public void sendRfidReadStatusEvent(boolean isReading) {
+        this.send(MessageType.RFID_READ_STATUS_CHANGED,
+                new HashMap<String, Object>() {
+                    {
+                        put("isReading", isReading);
+                    }
+                });
+    }
+
     /**
      * Sends a message to the Flutter client informing that the new tag read.
      */
