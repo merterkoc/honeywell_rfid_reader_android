@@ -1,4 +1,3 @@
-import 'dart:collection';
 
 import 'package:flutter/services.dart';
 import 'package:honeywell_rfid_reader_android_beta/constants/channel_address.dart';

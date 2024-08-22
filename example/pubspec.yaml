@@ -14,11 +14,11 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  bloc: ^8.1.4
+  cupertino_icons: ^1.0.8
+  equatable: ^2.0.5
   flutter:
     sdk: flutter
-
-  bloc: ^8.1.4
-  equatable: ^2.0.5
   flutter_bloc: ^8.1.6
   honeywell_rfid_reader_android_beta:
     # When depending on this package from a real application you should use:
@@ -30,14 +30,15 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+
   permission_handler: ^11.3.1
   very_good_analysis: ^6.0.0
 
 dev_dependencies:
-  integration_test:
-    sdk: flutter
+  flutter_lints: ^4.0.0
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -45,7 +46,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

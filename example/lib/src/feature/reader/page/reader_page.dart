@@ -66,7 +66,7 @@ class ReaderPage extends StatelessWidget {
                   },
                   child: const Text('Clear'),
                 ),
-              )
+              ),
             ],
           ),
           BlocBuilder<RfidManagerBloc, RfidManagerState>(

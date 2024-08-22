@@ -137,7 +137,7 @@ class _HomePageState extends State<HomePage> {
                               .add(const CreateReader());
                           debugPrint('created reader');
                           Navigator.of(context).push(
-                            MaterialPageRoute(
+                            MaterialPageRoute<void>(
                               builder: (context) => const ReaderPage(),
                             ),
                           );
