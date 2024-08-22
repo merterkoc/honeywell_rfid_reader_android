@@ -7,7 +7,7 @@ import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
 
 /// An implementation of [HoneywellRfidReaderPlatform] that uses method
 /// channels.
-class MethodChannelHoneywellRfidReaderAndroid
+class MethodChannelHoneywellRfidReader
     extends HoneywellRfidReaderPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting

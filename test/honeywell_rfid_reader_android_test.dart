@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_android_method_channel.dart';
+import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_method_channel.dart';
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
 import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -10,11 +10,11 @@ class MockHoneywellRfidReaderAndroidPlatform
   void main() {
     final initialPlatform = HoneywellRfidReaderPlatform.instance;
 
-    test('$MethodChannelHoneywellRfidReaderAndroid is the default instance',
+    test('$MethodChannelHoneywellRfidReader is the default instance',
         () {
       expect(
         initialPlatform,
-        isInstanceOf<MethodChannelHoneywellRfidReaderAndroid>(),
+        isInstanceOf<MethodChannelHoneywellRfidReader>(),
       );
     });
 

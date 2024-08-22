@@ -1,22 +1,19 @@
+import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_method_channel.dart';
 import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 abstract class HoneywellRfidReaderPlatform extends PlatformInterface {
-  /// Constructs a HoneywellRfidReaderAndroidPlatform.
   HoneywellRfidReaderPlatform() : super(token: _token);
 
   static final Object _token = Object();
 
-  static HoneywellRfidReaderPlatform _instance = _honeywellRfidReaderPlatform();
+  static HoneywellRfidReaderPlatform _instance =
+      MethodChannelHoneywellRfidReader();
 
-  /// The default instance of [HoneywellRfidReaderPlatform] to use.
   static HoneywellRfidReaderPlatform get instance => _instance;
 
-  /// Platform-specific implementations should set this with their own
-  /// platform-specific class that extends [HoneywellRfidReaderPlatform] when
-  /// they register themselves.
   static set instance(HoneywellRfidReaderPlatform instance) {
-    PlatformInterface.verifyToken(instance, _token);
+    PlatformInterface.verify(instance, _token);
     _instance = instance;
   }
 
@@ -47,7 +44,4 @@ abstract class HoneywellRfidReaderPlatform extends PlatformInterface {
   Future<void> connectUsbDevice();
 
   Future<void> disconnectUsbDevice();
-
-  static HoneywellRfidReaderPlatform _honeywellRfidReaderPlatform() =>
-      HoneywellRfidReaderPlatform.instance;
 }

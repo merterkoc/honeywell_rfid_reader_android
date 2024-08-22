@@ -106,6 +106,9 @@ class _BluetoothDeviceListDialogState extends State<BluetoothDeviceListDialog> {
               ),
               TextButton(
                 onPressed: () {
+                  context
+                      .read<RfidManagerBloc>()
+                      .add(const DisableScanBluetoothDevices());
                   Navigator.of(context).pop();
                 },
                 child: const Text('Close'),
