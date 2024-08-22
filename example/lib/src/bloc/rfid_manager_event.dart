@@ -143,3 +143,17 @@ class ConnectDevice extends RfidManagerEvent {
         device,
       ];
 }
+
+class ConnectUsbDevice extends RfidManagerEvent {
+  const ConnectUsbDevice();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class DisconnectUsbDevice extends RfidManagerEvent {
+  const DisconnectUsbDevice();
+
+  @override
+  List<Object?> get props => [];
+}

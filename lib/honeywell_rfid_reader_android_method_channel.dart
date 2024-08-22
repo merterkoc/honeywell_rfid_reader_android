@@ -83,4 +83,14 @@ class MethodChannelHoneywellRfidReaderAndroid
   Future<void> connectDevice(MyBluetoothDevice device) async {
     await methodChannel.invokeMethod('connectDevice', device.address);
   }
+
+  @override
+  Future<void> connectUsbDevice() async {
+    await methodChannel.invokeMethod('connectUsbDevice');
+  }
+
+  @override
+  Future<void> disconnectUsbDevice() async {
+    await methodChannel.invokeMethod('disconnectUsbDevice');
+  }
 }

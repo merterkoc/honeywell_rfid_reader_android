@@ -1,10 +1,14 @@
 package com.example.honeywell_rfid_reader_android;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+import static android.content.Context.RECEIVER_NOT_EXPORTED;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -79,8 +83,6 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
     private final TagChangeBroadcastReceiver tagChangeBroadcastReceiver = new TagChangeBroadcastReceiver();
 
 
-    private int mTargetSwitchInterval = 3000;
-
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -93,7 +95,11 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
         IntentFilter filter = new IntentFilter("action.TAG_CHANGE");
         filter.addAction("action.TAG_CHANGE");
-        flutterPluginBinding.getApplicationContext().registerReceiver(tagChangeBroadcastReceiver, filter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            flutterPluginBinding.getApplicationContext().registerReceiver(tagChangeBroadcastReceiver, filter, RECEIVER_EXPORTED);
+            flutterPluginBinding.getApplicationContext().registerReceiver(tagChangeBroadcastReceiver, filter, RECEIVER_NOT_EXPORTED);
+        }
+
         channel.setMethodCallHandler(this);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         RfidManager.create(flutterPluginBinding.getApplicationContext(), new RfidManager.CreatedCallback() {
@@ -136,6 +142,7 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
                                     rfidManager.connect(device.getAddress());
                                     if (rfidManager.getReader() == null) {
                                         dartMessenger.sendReaderErrorEvent("Reader not connected");
+                                        Log.d("notConnected", "notConnected");
                                     }
                                 }
                             }
@@ -191,7 +198,12 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
             } else if (!rfidManager.connect(deviceAddress)) {
                 result.error("Error", "Device not found", null);
             }
-
+            result.success(true);
+        } else if (call.method.equals("connectUsbDevice")) {
+            rfidManager.connect(null);
+            result.success(true);
+        } else if (call.method.equals("disconnectUsbDevice")) {
+            rfidManager.disconnect();
             result.success(true);
         } else {
             result.notImplemented();
@@ -274,7 +286,15 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
     private void startRead() {
         if (!isReaderAvailable()) {
-            return;
+            RfidReader reader = rfidManager.getReader();
+            if (reader == null) {
+                throw new RuntimeException("Reader is null'");
+            }
+            boolean b = rfidManager.readerAvailable();
+            Log.d("readerAvailable", "readerAvailable: " + b);
+            if (!b) {
+                throw new RuntimeException("Reader not available");
+            }
         }
         synchronized (mTagDataList) {
             mTagDataList.clear();
@@ -282,6 +302,7 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
         rfidManager.getReader().setOnTagReadListener(dataListener);
         rfidManager.getReader().read(TagAdditionData.NONE);
         dartMessenger.sendRfidReadStatusEvent(true);
+        Log.d("startRead", "startRead completed");
     }
 
     private void stopRead() {
@@ -308,7 +329,6 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-        channel.setMethodCallHandler(null);
     }
 
 
@@ -322,29 +342,29 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
 
         @Override
         public void onDeviceConnected(Object o) {
-            DriverManager.println("onDeviceConnected");
+            Log.d("onDeviceConnected", "onDeviceConnected");
             dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.CONNECTED);
         }
 
         @Override
         public void onDeviceDisconnected(Object o) {
-            DriverManager.println("onDeviceDisconnected");
+            Log.d("onDeviceDisconnected", "onDeviceDisconnected");
             dartMessenger.sendRfidConnectionStatusEvent(ConnectionStatus.DISCONNECTED);
         }
 
         @Override
         public void onUsbDeviceAttached(Object o) {
-
+            Log.d("onUsbDeviceAttached", "onUsbDeviceAttached");
         }
 
         @Override
         public void onUsbDeviceDetached(Object o) {
-
+            Log.d("onUsbDeviceDetached", "onUsbDeviceDetached");
         }
 
         @Override
         public void onReaderCreated(boolean b, final RfidReader rfidReader) {
-            DriverManager.println("onReaderCreated");
+            Log.d("onReaderCreated", "onReaderCreated");
         }
 
         @Override
@@ -376,6 +396,9 @@ public class HoneywellRfidReaderAndroidPlugin implements FlutterPlugin, MethodCa
             synchronized (mTagDataList) {
                 for (TagReadData trd : t) {
                     String epc = trd.getEpcHexStr();
+
+                    Log.d("tagReadNative: ", "onTagRead");
+                    Log.d("tagReadNative: ", epc);
                     if (true) {
                         epc += ByteUtils.bytes2HexStr(trd.getAdditionData());
                     }

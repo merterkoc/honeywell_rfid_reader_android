@@ -33,6 +33,8 @@ class RfidManagerBloc extends Bloc<RfidManagerEvent, RfidManagerState> {
     on<ClearTags>(_clearTags);
     on<BluetoothDeviceFound>(_bluetoothDeviceFound);
     on<ConnectDevice>(_connectDevice);
+    on<ConnectUsbDevice>(_connectUsbDevice);
+    on<DisconnectUsbDevice>(_disconnectUsbDevice);
 
     connectionStatusChangedStream =
         rfidManager.connectionStatusChangedStream.listen((status) {
@@ -240,5 +242,39 @@ class RfidManagerBloc extends Bloc<RfidManagerEvent, RfidManagerState> {
     await readStatusChangedStream.cancel();
     rfidManager.close();
     await super.close();
+  }
+
+  FutureOr<void> _connectUsbDevice(
+    ConnectUsbDevice event,
+    Emitter<RfidManagerState> emit,
+  ) async {
+    try {
+      await rfidManager.connectUsbDevice();
+      emit(
+        state.copyWith(manuelDeviceConnectionStatus: OperationStatus.SUCCESS),
+      );
+    } on Exception {
+      emit(
+        state.copyWith(manuelDeviceConnectionStatus: OperationStatus.FAILURE),
+      );
+      rethrow;
+    }
+  }
+
+  FutureOr<void> _disconnectUsbDevice(
+    DisconnectUsbDevice event,
+    Emitter<RfidManagerState> emit,
+  ) async {
+    try {
+      await rfidManager.disconnectUsbDevice();
+      emit(
+        state.copyWith(manuelDeviceConnectionStatus: OperationStatus.SUCCESS),
+      );
+    } on Exception {
+      emit(
+        state.copyWith(manuelDeviceConnectionStatus: OperationStatus.FAILURE),
+      );
+      rethrow;
+    }
   }
 }

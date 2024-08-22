@@ -101,6 +101,20 @@ class _HomePageState extends State<HomePage> {
                   icon: Icons.bluetooth_disabled,
                   label: 'Disconnect',
                 ),
+                CardButton(
+                  onPressed: () => context
+                      .read<RfidManagerBloc>()
+                      .add(const ConnectUsbDevice()),
+                  icon: Icons.usb,
+                  label: 'Connect USB',
+                ),
+                CardButton(
+                  onPressed: () => context
+                      .read<RfidManagerBloc>()
+                      .add(const DisconnectUsbDevice()),
+                  icon: Icons.usb,
+                  label: 'Disconnect USB',
+                ),
                 BlocBuilder<RfidManagerBloc, RfidManagerState>(
                   buildWhen: (previous, current) =>
                       previous.bluetoothStatus != current.bluetoothStatus ||

@@ -96,4 +96,16 @@ class MockHoneywellRfidReaderAndroidPlatform
     // TODO(mert): implement connectDevice
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> connectUsbDevice() {
+    // TODO(mert): implement connectUsbDevice
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> disconnectUsbDevice() {
+    // TODO(mert): implement disconnectUsbDevice
+    throw UnimplementedError();
+  }
 }

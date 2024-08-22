@@ -66,4 +66,14 @@ class HoneywellRfidReaderAndroid implements HoneywellRfidReaderPlatform {
   Future<void> connectDevice(MyBluetoothDevice device) async {
     return instance.connectDevice(device);
   }
+
+  @override
+  Future<void> connectUsbDevice() async {
+    return instance.connectUsbDevice();
+  }
+
+  @override
+  Future<void> disconnectUsbDevice() async {
+    return instance.disconnectUsbDevice();
+  }
 }

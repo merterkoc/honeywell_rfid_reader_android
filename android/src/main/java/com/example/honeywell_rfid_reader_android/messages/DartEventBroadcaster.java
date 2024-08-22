@@ -2,6 +2,7 @@ package com.example.honeywell_rfid_reader_android.messages;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -58,6 +59,8 @@ public class DartEventBroadcaster {
                         put("device", bluetoothMessage.toMap());
                     }
                 }
+
         );
+        Log.d("sending channel: ", "sendBluetoothDeviceFoundEvent");
     }
 }

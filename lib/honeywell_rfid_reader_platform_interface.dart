@@ -50,4 +50,8 @@ abstract class HoneywellRfidReaderPlatform extends PlatformInterface {
   Future<bool> isConnected();
 
   Future<void> connectDevice(MyBluetoothDevice device);
+
+  Future<void> connectUsbDevice();
+
+  Future<void> disconnectUsbDevice();
 }
