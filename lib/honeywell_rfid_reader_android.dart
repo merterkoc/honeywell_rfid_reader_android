@@ -1,5 +1,5 @@
 import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
-import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
+import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
 
 class HoneywellRfidReaderAndroid implements HoneywellRfidReaderPlatform {
   static HoneywellRfidReaderPlatform get instance =>

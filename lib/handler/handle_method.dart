@@ -5,7 +5,7 @@ import 'package:honeywell_rfid_reader_android/constants/channel_address.dart';
 import 'package:honeywell_rfid_reader_android/handler/util/observer/observer.dart';
 import 'package:honeywell_rfid_reader_android/handler/util/observer/observer_list.dart';
 import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
-import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
+import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
 
 class HandleMethod extends ObserverList {
   static final MethodChannel _channel =

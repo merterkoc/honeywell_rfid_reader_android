@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
-import 'package:honeywell_rfid_reader_android/model/my_blueetooth_device.dart';
+import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
 import 'package:honeywell_rfid_reader_android/rfid_manager/rfid_manager.dart';
 import 'package:honeywell_rfid_reader_android_example/src/model/enum/operation_status.dart';
 import 'package:honeywell_rfid_reader_android_example/src/model/enum/scanning_status.dart';
