@@ -1,6 +1,6 @@
 name: honeywell_rfid_reader_android_beta
 description: "RFID Reader plugin for Honeywell RFID readers on Android."
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/merterkoc/honeywell_rfid_reader_android
 
 environment:
