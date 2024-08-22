@@ -20,7 +20,7 @@ dependencies:
   bloc: ^8.1.4
   equatable: ^2.0.5
   flutter_bloc: ^8.1.6
-  honeywell_rfid_reader_android:
+  honeywell_rfid_reader_android_beta:
     # When depending on this package from a real application you should use:
     #   honeywell_rfid_reader_android: ^x.y.z
     # See https://dart.dev/tools/pub/dependencies#version-constraints

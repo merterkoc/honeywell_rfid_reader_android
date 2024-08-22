@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
+import 'package:honeywell_rfid_reader_android_beta/model/connection_status.dart';
 import 'package:honeywell_rfid_reader_android_example/src/bloc/rfid_manager_bloc.dart';
 import 'package:honeywell_rfid_reader_android_example/src/feature/home/widget/bluetooth_device_list_dialog.dart';
 import 'package:honeywell_rfid_reader_android_example/src/feature/home/widget/bluetooth_settings_widget.dart';

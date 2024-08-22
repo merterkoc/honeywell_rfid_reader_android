@@ -1,7 +1,7 @@
-name: honeywell_rfid_reader_android
+name: honeywell_rfid_reader_android_beta
 description: "A new Flutter project."
 version: 0.0.1
-homepage:
+homepage: https://github.com/merterkoc/honeywell_rfid_reader_android
 
 environment:
   sdk: ^3.5.0

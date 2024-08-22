@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:honeywell_rfid_reader_android/handler/handle_method.dart';
-import 'package:honeywell_rfid_reader_android/handler/util/observer/observer.dart';
-import 'package:honeywell_rfid_reader_android/honeywell_rfid_reader_platform_interface.dart';
-import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
-import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
+import 'package:honeywell_rfid_reader_android_beta/handler/handle_method.dart';
+import 'package:honeywell_rfid_reader_android_beta/handler/util/observer/observer.dart';
+import 'package:honeywell_rfid_reader_android_beta/honeywell_rfid_reader_platform_interface.dart';
+import 'package:honeywell_rfid_reader_android_beta/model/connection_status.dart';
+import 'package:honeywell_rfid_reader_android_beta/model/my_bluetooth_device.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class RFIDManager extends Observer {

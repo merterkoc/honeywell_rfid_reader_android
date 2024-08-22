@@ -1,4 +1,4 @@
-# honeywell_rfid_reader_android
+# honeywell_rfid_reader_android_beta
 
 A new Flutter project.
 

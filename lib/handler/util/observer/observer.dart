@@ -1,5 +1,5 @@
-import 'package:honeywell_rfid_reader_android/model/connection_status.dart';
-import 'package:honeywell_rfid_reader_android/model/my_bluetooth_device.dart';
+import 'package:honeywell_rfid_reader_android_beta/model/connection_status.dart';
+import 'package:honeywell_rfid_reader_android_beta/model/my_bluetooth_device.dart';
 
 class Observer {
   void addObserver(Observer observer) {

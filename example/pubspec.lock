@@ -122,7 +122,7 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  honeywell_rfid_reader_android:
+  honeywell_rfid_reader_android_beta:
     dependency: "direct main"
     description:
       path: ".."
